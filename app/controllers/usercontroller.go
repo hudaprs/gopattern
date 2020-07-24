@@ -88,7 +88,7 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 			helpers.ERROR(w, http.StatusBadRequest, err)
 			return
 		}
-		response["token"] = token
+		response["Token"] = token
 		helpers.JSON(w, http.StatusOK, response)
 		return
 	}
@@ -96,5 +96,21 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 	response["Status"] = "Error"
 	response["Message"] = "User not found"
 	helpers.JSON(w, http.StatusNotFound, response)
+	return
+}
+
+// GetAllUsers getting all users
+func (app *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{"Status": "Success", "Message": "Users List"}
+	user := &models.UserJSON{}
+
+	users, err := user.GetUsers(app.DB)
+	if err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	response["Data"] = users
+	helpers.JSON(w, http.StatusOK, response)
 	return
 }

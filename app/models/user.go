@@ -16,6 +16,17 @@ type User struct {
 	Name     string `gorm:"size:100;not null;"`
 	Email    string `gorm:"size:100;not null;"`
 	Password string `gorm:"size:255;not null;"`
+	Role     Role   `gorm:"ForeignKey:RoleID"`
+	RoleID   uint   `gorm:"not null"`
+}
+
+// UserJSON struct
+type UserJSON struct {
+	ID     string
+	Name   string
+	Email  string
+	Role   Role `gorm:"ForeignKey:RoleID" json:"role"`
+	RoleID uint
 }
 
 // HashPassword of user
@@ -56,6 +67,9 @@ func (user User) Validate(action string) error {
 		if user.Password == "" {
 			return errors.New("Password is required")
 		}
+		if user.RoleID == 0 {
+			return errors.New("Role ID is required")
+		}
 		return nil
 	case "login":
 		if err := checkmail.ValidateFormat(user.Email); err != nil {
@@ -86,4 +100,14 @@ func (user *User) Register(db *gorm.DB) (*User, error) {
 		return nil, err
 	}
 	return user, err
+}
+
+// GetUsers Get all users
+func (userJSON UserJSON) GetUsers(db *gorm.DB) (*[]UserJSON, error) {
+	var err error
+	users := []UserJSON{}
+	if err := db.Table("users").Preload("Role").Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return &users, err
 }

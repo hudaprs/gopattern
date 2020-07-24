@@ -1,3 +1,5 @@
-# GoPattern with MVC Look a Like
+# Gopattern
 
-Go pattern with MVC using PostgreSQL, JWT & GORM.
+Go pattern with Golang Native using PostgreSQL, JWT & GORM & some others middleware.
+
+# Readme will updated soon

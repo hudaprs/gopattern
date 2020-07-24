@@ -28,7 +28,15 @@ func (app *App) Routes() {
 	app.Router.HandleFunc("/api/register", app.Register).Methods("POST")
 	app.Router.HandleFunc("/api/login", app.Login).Methods("POST")
 
-	// ProtectedRouter := app.Router.PathPrefix("/api/v1/users").Subrouter()
+	ProtectedRouter := app.Router.PathPrefix("/api/v1").Subrouter()
+	ProtectedRouter.Use(middlewares.AuthJwtVerify)
+	ProtectedRouter.HandleFunc("/roles", app.GetAllRoles).Methods("GET")
+	ProtectedRouter.HandleFunc("/roles", app.CreateRole).Methods("POST")
+	ProtectedRouter.HandleFunc("/roles/{id}", app.GetRole).Methods("GET")
+	ProtectedRouter.HandleFunc("/roles/{id}", app.UpdateRole).Methods("PATCH")
+	ProtectedRouter.HandleFunc("/roles/{id}", app.DeleteRole).Methods("DELETE")
+
+	ProtectedRouter.HandleFunc("/users", app.GetAllUsers).Methods("GET")
 }
 
 // Init App
@@ -45,7 +53,7 @@ func (app *App) Init(DbHost, DbPort, DbUser, DbName, DbPassword string) {
 	fmt.Println("Connected To Database")
 	fmt.Println("Server started port 8000")
 
-	app.DB.Debug().AutoMigrate(&models.User{})
+	app.DB.Debug().AutoMigrate(&models.User{}, &models.Role{})
 	app.Routes()
 
 	log.Fatal(http.ListenAndServe(":8000", app.Router))

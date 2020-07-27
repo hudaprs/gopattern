@@ -22,21 +22,31 @@ type App struct {
 
 // Routes app
 func (app *App) Routes() {
-	app.Router = mux.NewRouter().StrictSlash(true)
-	app.Router.Use(middlewares.SetContentTypeHeader)
 
+	app.Router = mux.NewRouter().StrictSlash(true)
+	ProtectedRouter := app.Router.PathPrefix("/api/v1").Subrouter()
+	ProtectedRouterHighAdmin := app.Router.PathPrefix("/api/v1").Subrouter()
+
+	// Middlewares
+	app.Router.Use(middlewares.SetContentTypeHeader)
+	ProtectedRouter.Use(middlewares.AuthJwtVerify)
+	ProtectedRouterHighAdmin.Use(middlewares.AuthJwtVerify)
+	ProtectedRouterHighAdmin.Use(middlewares.OnlyHighAdmin)
+
+	// Open Routes
 	app.Router.HandleFunc("/api/register", app.Register).Methods("POST")
 	app.Router.HandleFunc("/api/login", app.Login).Methods("POST")
 
-	ProtectedRouter := app.Router.PathPrefix("/api/v1").Subrouter()
-	ProtectedRouter.Use(middlewares.AuthJwtVerify)
-	ProtectedRouter.HandleFunc("/roles", app.GetAllRoles).Methods("GET")
-	ProtectedRouter.HandleFunc("/roles", app.CreateRole).Methods("POST")
-	ProtectedRouter.HandleFunc("/roles/{id}", app.GetRole).Methods("GET")
-	ProtectedRouter.HandleFunc("/roles/{id}", app.UpdateRole).Methods("PATCH")
-	ProtectedRouter.HandleFunc("/roles/{id}", app.DeleteRole).Methods("DELETE")
+	// High Admin Routes
+	ProtectedRouterHighAdmin.HandleFunc("/roles", app.GetAllRoles).Methods("GET")
+	ProtectedRouterHighAdmin.HandleFunc("/roles", app.CreateRole).Methods("POST")
+	ProtectedRouterHighAdmin.HandleFunc("/roles/{id}", app.GetRole).Methods("GET")
+	ProtectedRouterHighAdmin.HandleFunc("/roles/{id}", app.UpdateRole).Methods("PATCH")
+	ProtectedRouterHighAdmin.HandleFunc("/roles/{id}", app.DeleteRole).Methods("DELETE")
+	ProtectedRouterHighAdmin.HandleFunc("/users", app.GetAllUsers).Methods("GET")
 
-	ProtectedRouter.HandleFunc("/users", app.GetAllUsers).Methods("GET")
+	// Protected Router
+	ProtectedRouter.HandleFunc("/users/me", app.GetOneUser).Methods("GET")
 }
 
 // Init App

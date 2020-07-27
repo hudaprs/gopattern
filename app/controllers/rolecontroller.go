@@ -22,7 +22,7 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response["data"] = roles
+	response["Data"] = roles
 	helpers.JSON(w, http.StatusOK, response)
 }
 

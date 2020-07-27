@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/jinzhu/gorm"
 )
@@ -41,11 +42,11 @@ func (role *Role) Create(db *gorm.DB) (*Role, error) {
 
 // GetRoleByID get role by ID
 func (role Role) GetRoleByID(id string, db *gorm.DB) (*Role, error) {
-	var err error
 	if err := db.Debug().Table("roles").Where("id = ?", id).First(&role).Error; err != nil {
 		return nil, err
 	}
-	return &role, err
+	fmt.Println(&role)
+	return &role, nil
 }
 
 // Update selected role

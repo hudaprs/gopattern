@@ -25,7 +25,7 @@ type UserJSON struct {
 	ID     string
 	Name   string
 	Email  string
-	Role   Role `gorm:"ForeignKey:RoleID" json:"role"`
+	Role   Role `gorm:"ForeignKey:RoleID"`
 	RoleID uint
 }
 
@@ -86,11 +86,10 @@ func (user User) Validate(action string) error {
 
 // GetUserByEmail for checking the existeence user
 func (user User) GetUserByEmail(db *gorm.DB) (*User, error) {
-	var err error
 	if err := db.Debug().Table("users").Where("email = ?", user.Email).First(&user).Error; err != nil {
 		return nil, err
 	}
-	return &user, err
+	return &user, nil
 }
 
 // Register a new user
@@ -110,4 +109,12 @@ func (userJSON UserJSON) GetUsers(db *gorm.DB) (*[]UserJSON, error) {
 		return nil, err
 	}
 	return &users, err
+}
+
+// GetUser Get one user
+func (userJSON UserJSON) GetUser(id string, db *gorm.DB) (*UserJSON, error) {
+	if err := db.Debug().Table("users").Preload("Role").Where("id = ?", id).First(&userJSON).Error; err != nil {
+		return nil, err
+	}
+	return &userJSON, nil
 }

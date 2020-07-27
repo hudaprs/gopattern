@@ -7,6 +7,8 @@ import (
 	"gopattern/app/models"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"os"
 
 	"github.com/gorilla/context"
 )
@@ -135,7 +137,7 @@ func (app *App) GetOneUser(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{"Status": "Success", "Message": "User Detail"}
 	user := &models.UserJSON{}
 
-	userIDFromToken := fmt.Sprint(context.Get(r,"UserID"))
+	userIDFromToken := fmt.Sprint(context.Get(r, "UserID"))
 	userData, err := user.GetUser(userIDFromToken, app.DB)
 	if err != nil {
 		helpers.ERROR(w, http.StatusBadRequest, err)
@@ -146,3 +148,93 @@ func (app *App) GetOneUser(w http.ResponseWriter, r *http.Request) {
 	helpers.JSON(w, http.StatusOK, response)
 	return
 }
+
+// UploadImage user
+func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{"Status": "Success", "Message": "Image Uploaded"}
+	responseFail := map[string]interface{}{"Status": "Error", "Message": "File is required"}
+	responseValidation := map[string]interface{}{"Status": "Error", "Message": "The file must be png, jpeg, or jpg"}
+
+	// Update the user
+	user := &models.UserJSON{}
+	userIDFromContext := fmt.Sprint(context.Get(r, "UserID"))
+	if err := app.DB.Debug().Table("users").Preload("Role").Where("id = ?", userIDFromContext).First(&user).Error; err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Parse input to type multipart/form-data
+	// Set the maximum file size
+	r.ParseMultipartForm(10 << 20)
+
+	// Retreive file from posted form-data
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	defer file.Close()
+
+	if file == nil {
+		helpers.JSON(w, http.StatusBadRequest, responseFail)
+		return
+	}
+
+	// Get header type
+	headerType := handler.Header["Content-Type"][0]
+	headerTypesArray := []string{"image/png", "image/jpeg", "image/jpg"}
+	headerTypes := map[string]string{}
+	for _, header := range headerTypesArray {
+		headerTypes[header] = header
+	}
+
+	// Check the type of the file
+	if headerType != headerTypes[headerType] {
+		helpers.JSON(w, http.StatusUnprocessableEntity, responseValidation)
+		return
+	}
+
+	// Write temporary file in local
+	getFileExtension := strings.Split(headerType, "/")[1]
+	tempFile, err := ioutil.TempFile("public/images", "images-*."+getFileExtension)
+	if err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	defer tempFile.Close()
+
+	// Get The file bytes
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	// Write the file
+	tempFile.Write(fileBytes)
+
+	// Remove Previous image (if exists)
+	if user.ImageURL != "" {
+		getFileNameOnly := strings.Split(user.ImageURL, "/")[3]
+		err := os.Remove("public/images/" + getFileNameOnly)
+		if err != nil {
+			helpers.ERROR(w, http.StatusBadRequest, err)
+			return
+		}
+		user.ImageURL = r.Host + "/" + strings.ReplaceAll(tempFile.Name(), "\\", "/")
+	} else {
+		// Upload file as usual
+		user.ImageURL = r.Host + "/" + strings.ReplaceAll(tempFile.Name(), "\\", "/")
+	}
+
+	// Save the user
+	app.DB.Save(&user)
+
+	response["Data"] = user
+	helpers.JSON(w, http.StatusOK, response)
+}
+
+// DeleteImage user
+func (app *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+}
+

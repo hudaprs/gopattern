@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"math/rand"
 	"os"
 	"time"
 
@@ -18,4 +19,14 @@ func EncodeAuthToken(uid uint, name string, email string, role string) (string, 
 	claims["ExpiresAt"] = time.Now().Add(time.Hour * 1).Unix()
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
 	return token.SignedString([]byte(os.Getenv("SECRET")))
+}
+
+// RandomStringRunes generate a random string
+func RandStringRunes(n int) string {
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

@@ -18,15 +18,22 @@ type User struct {
 	Password string `gorm:"size:255;not null;"`
 	Role     Role   `gorm:"ForeignKey:RoleID"`
 	RoleID   uint   `gorm:"not null"`
+	ImageURL string `gorm:"size:255" sql:"DEFAULT:null"`
 }
 
 // UserJSON struct
 type UserJSON struct {
-	ID     string
-	Name   string
-	Email  string
-	Role   Role `gorm:"ForeignKey:RoleID"`
-	RoleID uint
+	gorm.Model
+	Name     string `gorm:"size:100;not null;"`
+	Email    string `gorm:"size:100;not null;"`
+	Role     Role   `gorm:"ForeignKey:RoleID"`
+	RoleID   uint   `gorm:"not null"`
+	ImageURL string `gorm:"size:255" sql:"DEFAULT:null"`
+}
+
+// Set User's table name to be `profiles`
+func (UserJSON) TableName() string {
+	return "users"
 }
 
 // HashPassword of user

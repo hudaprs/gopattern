@@ -22,33 +22,42 @@ type App struct {
 
 // Routes app
 func (app *App) Routes() {
+	app.Router = mux.NewRouter()
 
-	app.Router = mux.NewRouter().StrictSlash(true)
+	// Route List
+	PublicRouter := app.Router
 	ProtectedRouter := app.Router.PathPrefix("/api/v1").Subrouter()
-	ProtectedRouterHighAdmin := app.Router.PathPrefix("/api/v1").Subrouter()
+	ProtectedRouterHighAdminRouter := app.Router.PathPrefix("/api/v1").Subrouter()
 
 	// Middlewares
-	app.Router.Use(middlewares.SetContentTypeHeader)
+	PublicRouter.Use(middlewares.SetContentTypeHeader)
+	ProtectedRouterHighAdminRouter.Use(middlewares.SetContentTypeHeader)
+	ProtectedRouter.Use(middlewares.SetContentTypeHeader)
 	ProtectedRouter.Use(middlewares.AuthJwtVerify)
-	ProtectedRouterHighAdmin.Use(middlewares.AuthJwtVerify)
-	ProtectedRouterHighAdmin.Use(middlewares.OnlyHighAdmin)
+	ProtectedRouterHighAdminRouter.Use(middlewares.AuthJwtVerify)
+	ProtectedRouterHighAdminRouter.Use(middlewares.OnlyHighAdmin)
+
+	// Server static file
+	var imgServer = http.FileServer(http.Dir("./static/"))
+	app.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", imgServer))
 
 	// Open Routes
-	app.Router.HandleFunc("/api/register", app.Register).Methods("POST")
-	app.Router.HandleFunc("/api/login", app.Login).Methods("POST")
+	PublicRouter.HandleFunc("/api/register", app.Register).Methods("POST")
+	PublicRouter.HandleFunc("/api/login", app.Login).Methods("POST")
 
 	// High Admin Routes
-	ProtectedRouterHighAdmin.HandleFunc("/roles", app.GetAllRoles).Methods("GET")
-	ProtectedRouterHighAdmin.HandleFunc("/roles", app.CreateRole).Methods("POST")
-	ProtectedRouterHighAdmin.HandleFunc("/roles/{id}", app.GetRole).Methods("GET")
-	ProtectedRouterHighAdmin.HandleFunc("/roles/{id}", app.UpdateRole).Methods("PATCH")
-	ProtectedRouterHighAdmin.HandleFunc("/roles/{id}", app.DeleteRole).Methods("DELETE")
-	ProtectedRouterHighAdmin.HandleFunc("/users", app.GetAllUsers).Methods("GET")
+	ProtectedRouterHighAdminRouter.HandleFunc("/roles", app.GetAllRoles).Methods("GET")
+	ProtectedRouterHighAdminRouter.HandleFunc("/roles", app.CreateRole).Methods("POST")
+	ProtectedRouterHighAdminRouter.HandleFunc("/roles/{id}", app.GetRole).Methods("GET")
+	ProtectedRouterHighAdminRouter.HandleFunc("/roles/{id}", app.UpdateRole).Methods("PATCH")
+	ProtectedRouterHighAdminRouter.HandleFunc("/roles/{id}", app.DeleteRole).Methods("DELETE")
+	ProtectedRouterHighAdminRouter.HandleFunc("/users", app.GetAllUsers).Methods("GET")
 
-	// Protected Router
+	// Protected Routes
 	ProtectedRouter.HandleFunc("/users/me", app.GetOneUser).Methods("GET")
 	ProtectedRouter.HandleFunc("/users/me/upload-image", app.UploadUserImage).Methods("PUT")
 	ProtectedRouter.HandleFunc("/users/me/delete-image", app.DeleteImage).Methods("DELETE")
+	ProtectedRouter.HandleFunc("/users/image/{id}", app.GetUserImage).Methods("GET")
 }
 
 // Init App

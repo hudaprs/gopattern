@@ -7,8 +7,10 @@ import (
 	"gopattern/app/models"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"os"
+	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/gorilla/context"
 )
@@ -52,7 +54,7 @@ func (app *App) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response["Data"] = map[string]interface{}{"ID": userData.ID, "Name": userData.Name, "Email": userData.Email, "CreatedAt": userData.CreatedAt, "UpdatedAt": userData.CreatedAt, "DeletedAt": userData.DeletedAt }
+	response["Data"] = map[string]interface{}{"ID": userData.ID, "Name": userData.Name, "Email": userData.Email, "CreatedAt": userData.CreatedAt, "UpdatedAt": userData.CreatedAt, "DeletedAt": userData.DeletedAt}
 	helpers.JSON(w, http.StatusCreated, response)
 	return
 }
@@ -198,7 +200,7 @@ func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
 
 	// Write temporary file in local
 	getFileExtension := strings.Split(headerType, "/")[1]
-	tempFile, err := ioutil.TempFile("public/images", "images-*."+getFileExtension)
+	tempFile, err := ioutil.TempFile("static/user_images", "images-*."+getFileExtension)
 	if err != nil {
 		helpers.ERROR(w, http.StatusBadRequest, err)
 		return
@@ -217,7 +219,7 @@ func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
 	// Remove Previous image (if exists)
 	if user.ImageURL != "" {
 		getFileNameOnly := strings.Split(user.ImageURL, "/")[3]
-		err := os.Remove("public/images/" + getFileNameOnly)
+		err := os.Remove("static/user_images/" + getFileNameOnly)
 		if err != nil {
 			helpers.ERROR(w, http.StatusBadRequest, err)
 			return
@@ -259,7 +261,7 @@ func (app *App) DeleteImage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		getFileNameOnly := strings.Split(userData.ImageURL, "/")[3]
-		err := os.Remove("public/images/" + getFileNameOnly)
+		err := os.Remove("static/user_images/" + getFileNameOnly)
 		if err != nil {
 			helpers.ERROR(w, http.StatusBadRequest, err)
 			return
@@ -279,3 +281,24 @@ func (app *App) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// GetUserImage preview user image
+func (app *App) GetUserImage(w http.ResponseWriter, r *http.Request) {
+	user := &models.UserJSON{}
+	id := mux.Vars(r)["id"]
+
+	// Get one user data
+	userData, err := user.GetUser(id, app.DB)
+	if err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Check the user data
+	if userData != nil {
+		return
+	}
+
+	response := map[string]interface{}{"Status": "Error", "Message": "User not found"}
+	helpers.JSON(w, http.StatusNotFound, response)
+	return
+}

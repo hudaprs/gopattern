@@ -93,7 +93,7 @@ func (user User) Validate(action string) error {
 
 // GetUserByEmail for checking the existeence user
 func (user User) GetUserByEmail(db *gorm.DB) (*User, error) {
-	if err := db.Debug().Table("users").Where("email = ?", user.Email).First(&user).Error; err != nil {
+	if err := db.Debug().Table("users").Preload("Role").Where("email = ?", user.Email).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

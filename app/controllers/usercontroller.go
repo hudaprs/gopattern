@@ -46,12 +46,13 @@ func (app *App) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = user.Register(app.DB)
+	userData, err := user.Register(app.DB)
 	if err != nil {
 		helpers.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
 
+	response["Data"] = map[string]interface{}{"ID": userData.ID, "Name": userData.Name, "Email": userData.Email, "CreatedAt": userData.CreatedAt, "UpdatedAt": userData.CreatedAt, "DeletedAt": userData.DeletedAt }
 	helpers.JSON(w, http.StatusCreated, response)
 	return
 }
@@ -82,29 +83,30 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check the user
-	checkUser, _ := user.GetUserByEmail(app.DB)
-	if checkUser != nil {
+	userData, _ := user.GetUserByEmail(app.DB)
+	if userData != nil {
 		// Check Password Hash
-		err = user.CheckHashedPassword(checkUser.Password, user.Password)
+		err = user.CheckHashedPassword(userData.Password, user.Password)
 		if err != nil {
 			helpers.ERROR(w, http.StatusBadRequest, err)
 			return
 		}
 
 		// Get Role for user
-		makeIDtoString := fmt.Sprint(checkUser.RoleID)
+		makeIDtoString := fmt.Sprint(userData.RoleID)
 		role, err := role.GetRoleByID(makeIDtoString, app.DB)
 		if err != nil {
 			helpers.ERROR(w, http.StatusBadRequest, err)
 			return
 		}
 
-		token, err := helpers.EncodeAuthToken(checkUser.ID, checkUser.Name, checkUser.Email, role.Name)
+		token, err := helpers.EncodeAuthToken(userData.ID, userData.Name, userData.Email, role.Name)
 		if err != nil {
 			helpers.ERROR(w, http.StatusBadRequest, err)
 			return
 		}
-		response["Token"] = token
+
+		response["Data"] = map[string]interface{}{"Token": token, "User": userData}
 		helpers.JSON(w, http.StatusOK, response)
 		return
 	}
@@ -234,7 +236,46 @@ func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteImage user
-func (app *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (app *App) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{"Status": "Success", "Message": "Image deleted"}
+	user := &models.UserJSON{}
+	userIDFromContext := fmt.Sprint(context.Get(r, "UserID"))
 
+	// Get One User
+	userData, err := user.GetUser(userIDFromContext, app.DB)
+	if err != nil {
+		helpers.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Check if the user isn't nil, and remove the image
+	if userData != nil {
+		// Check if user didn't have any image
+		if userData.ImageURL == "" {
+			response["Status"] = "Error"
+			response["Message"] = "User din't have image, yet"
+			helpers.JSON(w, http.StatusBadRequest, response)
+			return
+		}
+
+		getFileNameOnly := strings.Split(userData.ImageURL, "/")[3]
+		err := os.Remove("public/images/" + getFileNameOnly)
+		if err != nil {
+			helpers.ERROR(w, http.StatusBadRequest, err)
+			return
+		}
+		// Set
+		userData.ImageURL = ""
+		app.DB.Save(&userData)
+
+		response["Data"] = userData
+		helpers.JSON(w, http.StatusOK, response)
+		return
+	}
+
+	response["Status"] = "Error"
+	response["Message"] = "User not found"
+	helpers.JSON(w, http.StatusNotFound, response)
+	return
 }
 

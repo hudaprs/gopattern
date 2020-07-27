@@ -18,7 +18,7 @@ type User struct {
 	Password string `gorm:"size:255;not null;"`
 	Role     Role   `gorm:"ForeignKey:RoleID"`
 	RoleID   uint   `gorm:"not null"`
-	ImageURL string `gorm:"size:255" sql:"DEFAULT:null"`
+	ImageURL string `gorm:"size:255"`
 }
 
 // UserJSON struct
@@ -28,7 +28,7 @@ type UserJSON struct {
 	Email    string `gorm:"size:100;not null;"`
 	Role     Role   `gorm:"ForeignKey:RoleID"`
 	RoleID   uint   `gorm:"not null"`
-	ImageURL string `gorm:"size:255" sql:"DEFAULT:null"`
+	ImageURL string `gorm:"size:255"`
 }
 
 // Set User's table name to be `profiles`

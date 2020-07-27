@@ -48,6 +48,7 @@ func (app *App) Routes() {
 	// Protected Router
 	ProtectedRouter.HandleFunc("/users/me", app.GetOneUser).Methods("GET")
 	ProtectedRouter.HandleFunc("/users/me/upload-image", app.UploadUserImage).Methods("PUT")
+	ProtectedRouter.HandleFunc("/users/me/delete-image", app.DeleteImage).Methods("DELETE")
 }
 
 // Init App

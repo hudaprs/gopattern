@@ -67,5 +67,5 @@ func (role *Role) Delete(id uint, db *gorm.DB) (*Role, error) {
 	if err := db.Debug().Table("roles").Where("id = ?", id).Unscoped().Delete(&role).Error; err != nil {
 		return nil, err
 	}
-	return nil, err
+	return role, err
 }

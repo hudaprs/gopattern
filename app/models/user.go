@@ -69,7 +69,7 @@ func (user User) Validate(action string) error {
 			return errors.New("Name is required")
 		}
 		if err := checkmail.ValidateFormat(user.Email); err != nil {
-			return errors.New("Email must be valid")
+			return errors.New("Email is required and must be valid")
 		}
 		if user.Password == "" {
 			return errors.New("Password is required")
@@ -84,6 +84,16 @@ func (user User) Validate(action string) error {
 		}
 		if user.Password == "" {
 			return errors.New("Password is required")
+		}
+		return nil
+	case "forgot-password":
+		if err := checkmail.ValidateFormat(user.Email); err != nil {
+			return errors.New("Email is required and must be valid")
+		}
+		return nil
+	case "change-password":
+		if user.Password == "" {
+			return errors.New("New password is required")
 		}
 		return nil
 	default:
@@ -124,4 +134,17 @@ func (userJSON UserJSON) GetUser(id string, db *gorm.DB) (*UserJSON, error) {
 		return nil, err
 	}
 	return &userJSON, nil
+}
+
+// ChangeUserPassword change user password
+func (user *User) ChangeUserPassword(id string, db *gorm.DB) (*User, error) {
+	hashedPassword, err := HashPassword(user.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Debug().Table("users").Where("id = ?", id).Update("password", hashedPassword).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
 }

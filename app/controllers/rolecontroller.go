@@ -13,121 +13,108 @@ import (
 
 // GetAllRoles getting all users
 func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{"Status": "Success", "Message": "Roles list"}
 	role := &models.Role{}
 
 	roles, err := role.GetRoles(app.DB)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response["Data"] = roles
-	helpers.JSON(w, http.StatusOK, response)
+	helpers.Success(w, http.StatusOK, "Roles list", roles)
+	return
 }
 
 // CreateRole create a new role
 func (app *App) CreateRole(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{"Status": "Success", "Message": "Role successfully created"}
 	role := &models.Role{}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = json.Unmarshal(body, &role)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Validate the role input
 	err = role.Validate()
 	if err != nil {
-		helpers.ERROR(w, http.StatusUnprocessableEntity, err)
+		helpers.Error(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	newRole, err := role.Create(app.DB)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response["Data"] = newRole
-	helpers.JSON(w, http.StatusCreated, response)
+	helpers.Success(w, http.StatusCreated, "Role successfully created", newRole)
 }
 
 // GetRole get role by ID
 func (app *App) GetRole(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{"Status": "Success", "Message": "Role Detail"}
 	role := &models.Role{}
 	id := mux.Vars(r)["id"]
 
-	roleData, err := role.GetRoleByID(id, app.DB)
-	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
+	roleData, _ := role.GetRoleByID(id, app.DB)
 
 	if roleData == nil {
-		helpers.ERROR(w, http.StatusNotFound, err)
+		helpers.Error(w, http.StatusNotFound, "Role not found")
 		return
 	}
 
-	response["Data"] = roleData
-	helpers.JSON(w, http.StatusOK, response)
+	helpers.Success(w, http.StatusOK, "Role Detail", roleData)
 }
 
 // Update Role
 func (app *App) UpdateRole(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{"Status": "Success", "Message": "Role updated"}
 	role := &models.Role{}
 	id := mux.Vars(r)["id"]
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = json.Unmarshal(body, &role)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Validate the role input
 	err = role.Validate()
 	if err != nil {
-		helpers.ERROR(w, http.StatusUnprocessableEntity, err)
+		helpers.Error(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	// Check role data and update the data
 	roleData, _ := role.GetRoleByID(id, app.DB)
 	if roleData != nil {
-		_, err := role.Update(id, app.DB)
-		if err != nil {
-			helpers.ERROR(w, http.StatusBadRequest, err)
+		if err := app.DB.Debug().Table("roles").First(&roleData).Update("name", role.Name).Error; err != nil {
+			helpers.Error(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		app.DB.Save(&roleData)
 
-		helpers.JSON(w, http.StatusOK, response)
+		helpers.Success(w, http.StatusOK, "Role successfully updated", roleData)
 		return
 	}
 
-	response["Status"] = "Error"
-	response["Message"] = "Role not found"
-	helpers.JSON(w, http.StatusNotFound, response)
+	helpers.Error(w, http.StatusNotFound, "Role not found")
 	return
 }
 
 // DeleteRole delete selected role
 func (app *App) DeleteRole(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{"Status": "Success", "Message": "Role deleted"}
 	role := &models.Role{}
 	id := mux.Vars(r)["id"]
 
@@ -135,15 +122,13 @@ func (app *App) DeleteRole(w http.ResponseWriter, r *http.Request) {
 	if roleData != nil {
 		_, err := role.Delete(roleData.ID, app.DB)
 		if err != nil {
-			helpers.ERROR(w, http.StatusBadRequest, err)
+			helpers.Error(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		helpers.JSON(w, http.StatusOK, response)
+		helpers.Success(w, http.StatusOK, "Role successfully deleted", roleData)
 		return
 	}
 
-	response["Status"] = "Error"
-	response["Message"] = "Role not found"
-	helpers.JSON(w, http.StatusNotFound, response)
+	helpers.Error(w, http.StatusNotFound, "Role not found")
 	return
 }

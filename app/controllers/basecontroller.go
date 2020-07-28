@@ -24,8 +24,12 @@ type App struct {
 func (app *App) Routes() {
 	app.Router = mux.NewRouter()
 
+	// Server static file
+	var imgServer = http.FileServer(http.Dir("./static/"))
+	app.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", imgServer))
+
 	// Route List
-	PublicRouter := app.Router
+	PublicRouter := app.Router.PathPrefix("/api").Subrouter()
 	ProtectedRouter := app.Router.PathPrefix("/api/v1").Subrouter()
 	ProtectedRouterHighAdminRouter := app.Router.PathPrefix("/api/v1").Subrouter()
 
@@ -37,13 +41,11 @@ func (app *App) Routes() {
 	ProtectedRouterHighAdminRouter.Use(middlewares.AuthJwtVerify)
 	ProtectedRouterHighAdminRouter.Use(middlewares.OnlyHighAdmin)
 
-	// Server static file
-	var imgServer = http.FileServer(http.Dir("./static/"))
-	app.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", imgServer))
-
 	// Open Routes
-	PublicRouter.HandleFunc("/api/register", app.Register).Methods("POST")
-	PublicRouter.HandleFunc("/api/login", app.Login).Methods("POST")
+	PublicRouter.HandleFunc("/register", app.Register).Methods("POST")
+	PublicRouter.HandleFunc("/login", app.Login).Methods("POST")
+	PublicRouter.HandleFunc("/forgot-password", app.ForgotPassword).Methods("POST")
+	PublicRouter.HandleFunc("/change-password/{token}", app.ChangePassword).Methods("PATCH")
 
 	// High Admin Routes
 	ProtectedRouterHighAdminRouter.HandleFunc("/roles", app.GetAllRoles).Methods("GET")
@@ -54,10 +56,9 @@ func (app *App) Routes() {
 	ProtectedRouterHighAdminRouter.HandleFunc("/users", app.GetAllUsers).Methods("GET")
 
 	// Protected Routes
-	ProtectedRouter.HandleFunc("/users/me", app.GetOneUser).Methods("GET")
-	ProtectedRouter.HandleFunc("/users/me/upload-image", app.UploadUserImage).Methods("PUT")
+	ProtectedRouter.HandleFunc("/users/me", app.GetAuthenticatedUser).Methods("GET")
+	ProtectedRouter.HandleFunc("/users/me/upload-image", app.UploadUserImage).Methods("PATCH")
 	ProtectedRouter.HandleFunc("/users/me/delete-image", app.DeleteImage).Methods("DELETE")
-	ProtectedRouter.HandleFunc("/users/image/{id}", app.GetUserImage).Methods("GET")
 }
 
 // Init App
@@ -74,7 +75,10 @@ func (app *App) Init(DbHost, DbPort, DbUser, DbName, DbPassword string) {
 	fmt.Println("Connected To Database")
 	fmt.Println("Server started port 8000")
 
-	app.DB.Debug().AutoMigrate(&models.User{}, &models.Role{})
+	// Migrate the models
+	app.DB.Debug().AutoMigrate(&models.User{}, &models.Role{}, &models.Verification{})
+
+	// Init the routes
 	app.Routes()
 
 	log.Fatal(http.ListenAndServe(":8000", app.Router))

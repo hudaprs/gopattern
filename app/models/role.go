@@ -15,12 +15,11 @@ type Role struct {
 
 // GetRoles getting all roles
 func (role Role) GetRoles(db *gorm.DB) (*[]Role, error) {
-	var err error
 	roles := []Role{}
 	if err := db.Debug().Table("roles").Find(&roles).Error; err != nil {
 		return nil, err
 	}
-	return &roles, err
+	return &roles, nil
 }
 
 // Validate a input user
@@ -56,4 +55,20 @@ func (role *Role) Delete(id uint, db *gorm.DB) (*Role, error) {
 		return nil, err
 	}
 	return role, err
+}
+
+func (role *Role) CountRoles(db *gorm.DB) (int, error) {
+	var count int
+	if err := db.Debug().Table("roles").Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (role *Role) PaginateRoles(begin, limit int, db *gorm.DB) (*[]Role, error) {
+	roles := []Role{}
+	if err := db.Debug().Table("roles").Offset(begin).Limit(limit).Find(&roles).Error; err != nil {
+		return nil, err
+	}
+	return &roles, nil
 }

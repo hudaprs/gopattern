@@ -208,7 +208,7 @@ func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
 		getFileNameOnly := strings.Split(user.ImageURL, "/")[3]
 		err := os.Remove("static/user_images/" + getFileNameOnly)
 		if err != nil {
-			helpers.ERROR(w, http.StatusBadRequest, err)
+			helpers.Error(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		user.ImageURL = r.Host + "/" + strings.ReplaceAll(tempFile.Name(), "\\", "/")

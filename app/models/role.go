@@ -14,9 +14,16 @@ type Role struct {
 }
 
 // GetRoles getting all roles
-func (role Role) GetRoles(db *gorm.DB) (*[]Role, error) {
+func (role Role) GetRoles(name string, db *gorm.DB) (*[]Role, error) {
 	roles := []Role{}
-	if err := db.Debug().Table("roles").Find(&roles).Error; err != nil {
+	query := db.Debug().Table("roles").Find(&roles)
+
+	// Check the name
+	if name != "" {
+		query.Where("name = ?", "%"+name+"%")
+	}
+
+	if err := query.Error; err != nil {
 		return nil, err
 	}
 	return &roles, nil
@@ -65,9 +72,9 @@ func (role *Role) CountRoles(db *gorm.DB) (int, error) {
 	return count, nil
 }
 
-func (role *Role) PaginateRoles(begin, limit int, db *gorm.DB) (*[]Role, error) {
+func (role *Role) PaginateRoles(begin, limit int, name string, db *gorm.DB) (*[]Role, error) {
 	roles := []Role{}
-	if err := db.Debug().Table("roles").Offset(begin).Limit(limit).Find(&roles).Error; err != nil {
+	if err := db.Debug().Table("roles").Offset(begin).Limit(limit).Where("name LIKE ?", "%" + name + "%").Find(&roles).Error; err != nil {
 		return nil, err
 	}
 	return &roles, nil

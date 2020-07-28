@@ -26,6 +26,7 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 	// Paginate the roles
 	queryParams := r.URL.Query()
 	limitParam, _ := strconv.Atoi(queryParams.Get("limit"))
+	nameParam := queryParams.Get("name")
 	limit := 10
 	if limitParam < 1 {
 		limit = 10
@@ -39,7 +40,7 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the paginate
-	roles, err := role.PaginateRoles(begin, limit, app.DB)
+	roles, err := role.PaginateRoles(begin, limit, nameParam, app.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return

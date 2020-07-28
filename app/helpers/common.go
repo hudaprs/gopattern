@@ -8,6 +8,10 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+type WhatEver struct {
+	Name string
+}
+
 // EncodeAuthToken signs authentication token
 func EncodeAuthToken(uid uint, name string, email string, role string) (string, error) {
 	claims := jwt.MapClaims{}

@@ -119,13 +119,12 @@ func (user *User) Register(db *gorm.DB) (*User, error) {
 }
 
 // GetUsers Get all users
-func (userJSON UserJSON) GetUsers(db *gorm.DB) (*[]UserJSON, error) {
-	var err error
+func (userJSON UserJSON) GetUsers(begin, limit int, name string, db *gorm.DB) (*[]UserJSON, error) {
 	users := []UserJSON{}
-	if err := db.Table("users").Preload("Role").Find(&users).Error; err != nil {
+	if err := db.Table("users").Preload("Role").Offset(begin).Limit(limit).Where("name LIKE ?", "%" + name + "%").Find(&users).Error; err != nil {
 		return nil, err
 	}
-	return &users, err
+	return &users, nil
 }
 
 // GetUser Get one user
@@ -147,4 +146,13 @@ func (user *User) ChangeUserPassword(id string, db *gorm.DB) (*User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+// CountUsers from database
+func (user UserJSON) CountUsers(db *gorm.DB) (int, error) {
+	var count int
+	if err := db.Debug().Table("users").Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/context"
@@ -134,13 +135,37 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 func (app *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	user := &models.UserJSON{}
 
-	users, err := user.GetUsers(app.DB)
+	// Get total of user data
+	total, err := user.CountUsers(app.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	helpers.Success(w, http.StatusOK, "Users list", users)
+	// Paginate the users
+	queryParams := r.URL.Query()
+	nameParam := queryParams.Get("name")
+	limitParam, _ := strconv.Atoi(queryParams.Get("limit"))
+	if limitParam < 1 {
+		limitParam = 10
+	}
+	pages := total / limitParam
+	if (total % limitParam) != 0 {
+		pages ++
+	}
+
+	// Get the pagination data
+	page, begin := helpers.Pagination(r, limitParam)
+
+	users, err := user.GetUsers(begin, page, nameParam, app.DB)
+	if err != nil {
+		helpers.Error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	mapUsers := helpers.PaginationResponse(r, page, pages, limitParam, total, users)
+
+	helpers.Success(w, http.StatusOK, "Users list", mapUsers)
 	return
 }
 

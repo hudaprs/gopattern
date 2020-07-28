@@ -25,13 +25,10 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 
 	// Paginate the roles
 	queryParams := r.URL.Query()
-	limitParam, _ := strconv.Atoi(queryParams.Get("limit"))
+	limit, _ := strconv.Atoi(queryParams.Get("limit"))
 	nameParam := queryParams.Get("name")
-	limit := 10
-	if limitParam < 1 {
+	if limit < 1 {
 		limit = 10
-	} else {
-		limit = limitParam
 	}
 	page, begin := helpers.Pagination(r, limit)
 	pages := total / limit
@@ -40,30 +37,13 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the paginate
-	roles, err := role.PaginateRoles(begin, limit, nameParam, app.DB)
+	roles, err := role.GetRoles(begin, limit, nameParam, app.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	mapRoles := map[string]interface{}{
-		"Links": map[string]interface{}{
-			"First": r.URL.Host + r.URL.Path + "?page=" + strconv.Itoa(page),
-			"Last": r.URL.Host + r.URL.Path + "?page=" + strconv.Itoa(pages),
-			"Prev": r.URL.Host + r.URL.Path + "?page=" + strconv.Itoa(page - 1),
-			"Next": r.URL.Host + r.URL.Path + "?page=" + strconv.Itoa(page + 1),
-		},
-		"Meta": map[string]interface{}{
-			"Limit": limit,
-			"Total": total,
-			"TotalPage": pages,
-			"CurrentPage": page,
-			"NextPage": page + 1,
-			"PreviousPage": page - 1,
-			"LastPage": pages,
-		},
-		"Roles": roles,
-	}
+	mapRoles := helpers.PaginationResponse(r, page, pages, limit, total, roles)
 
 	helpers.Success(w, http.StatusOK, "Roles list", mapRoles)
 	return

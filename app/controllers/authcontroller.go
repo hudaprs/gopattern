@@ -15,7 +15,7 @@ func (app *App) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) {
 	userIDFromToken := fmt.Sprint(context.Get(r, "UserID"))
 	userData, err := user.GetUser(userIDFromToken, app.DB)
 	if err != nil {
-		helpers.ERROR(w, http.StatusBadRequest, err)
+		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

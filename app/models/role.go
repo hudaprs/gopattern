@@ -49,18 +49,6 @@ func (role Role) GetRoleByID(id string, db *gorm.DB) (*Role, error) {
 	return &role, nil
 }
 
-// Update selected role
-func (role *Role) Update(id string, db *gorm.DB) (*Role, error) {
-	var err error
-	if err := db.Debug().Table("roles").Where("id = ?", id).Updates(Role{
-		Name: role.Name,
-	}).Error; err != nil {
-		return nil, err
-	}
-
-	return role, err
-}
-
 // Delete selected role
 func (role *Role) Delete(id uint, db *gorm.DB) (*Role, error) {
 	var err error

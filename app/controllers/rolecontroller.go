@@ -32,6 +32,7 @@ func GetAllRoles(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 	page, begin := helpers.Pagination(r, limit)
+	// @info total variable's from counting the roles in the model
 	pages := total / limit
 	if (total % limit) != 0 {
 		pages++

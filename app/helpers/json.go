@@ -6,7 +6,14 @@ import (
 	"net/http"
 )
 
-// Success response JSON
+/**
+@desc Success response JSON
+
+@param w http.ResponseWriter
+@param statusCode int
+@param message string
+@param data interface{}
+ */
 func Success(w http.ResponseWriter, statusCode int, message string, data interface{}) {
 	w.WriteHeader(statusCode)
 	response := map[string]interface{}{
@@ -21,7 +28,13 @@ func Success(w http.ResponseWriter, statusCode int, message string, data interfa
 	}
 }
 
-// Error response JSON
+/**
+@desc Error response JSON
+
+@param w http.ResponseWriter
+@param statusCode int
+@param message string
+*/
 func Error(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
 	if message == "" {

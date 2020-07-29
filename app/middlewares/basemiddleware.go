@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"gopattern/app/helpers"
+
 	"github.com/gorilla/context"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 )
 
+// BaseMiddleware struct
 type BaseMiddleware struct {
 	DB *gorm.DB
 }
@@ -51,7 +53,7 @@ func AuthJwtVerify(next http.Handler) http.Handler {
 	})
 }
 
-// OnlyAdmin can access
+// OnlyHighAdmin can access
 func OnlyHighAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		roleName := context.Get(r, "RoleName")
@@ -64,3 +66,7 @@ func OnlyHighAdmin(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// Todo: OnlyNormalAdmin can access
+// Todo: OnlyGuest can access
+// Todo: OnlyLoggedInUser can access

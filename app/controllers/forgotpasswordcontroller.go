@@ -3,14 +3,17 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"gopattern/app/helpers"
 	"gopattern/app/models"
+	"gopattern/config"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func (app App) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+// ForgotPassword user
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
 	verification := &models.Verification{}
 
@@ -32,7 +35,7 @@ func (app App) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the user data by E-Mail
-	userData, err := user.GetUserByEmail(app.DB)
+	userData, err := user.GetUserByEmail(config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -41,11 +44,11 @@ func (app App) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if userData != nil {
 		// Check the verification data first
 		userIDString := fmt.Sprint(userData.ID)
-		verificationData, _ := verification.GetVerificationByID(userIDString, "Forgot Password", app.DB)
+		verificationData, _ := verification.GetVerificationByID(userIDString, "Forgot Password", config.DB)
 		if verificationData != nil {
 			// Delete the existing verification data
 			verificationIDString := fmt.Sprint(verificationData.ID)
-			_, err := verification.DeleteVerification(verificationIDString, app.DB)
+			_, err := verification.DeleteVerification(verificationIDString, config.DB)
 			if err != nil {
 				helpers.Error(w, http.StatusBadRequest, err.Error())
 				return
@@ -57,7 +60,7 @@ func (app App) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		verification.Name = "Forgot Password"
 		verification.Token = randomString
 		verification.UserID = userData.ID
-		app.DB.Save(&verification)
+		config.DB.Save(&verification)
 
 		helpers.Success(w, http.StatusCreated, "Verification token has been sent", verification)
 		return
@@ -68,7 +71,7 @@ func (app App) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // ChangePassword user
-func (app *App) ChangePassword(w http.ResponseWriter, r *http.Request) {
+func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	verification := &models.Verification{}
 	user := &models.User{}
 	userJSON := &models.UserJSON{}
@@ -81,7 +84,7 @@ func (app *App) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get verification data by token
-	verificationData, _ := verification.GetVerificationByToken(verificationToken, app.DB)
+	verificationData, _ := verification.GetVerificationByToken(verificationToken, config.DB)
 	if verificationData == nil {
 		helpers.Error(w, http.StatusNotFound, "Verification data not found")
 		return
@@ -110,14 +113,14 @@ func (app *App) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	// Get the user data
 	userIDString := fmt.Sprint(verificationData.UserID)
-	userData, _ := userJSON.GetUser(userIDString, app.DB)
+	userData, _ := userJSON.GetUser(userIDString, config.DB)
 	if userData == nil {
 		helpers.Error(w, http.StatusNotFound, "User not found")
 		return
 	}
 
 	// Update the user password
-	_, err = user.ChangeUserPassword(userIDString, app.DB)
+	_, err = user.ChangeUserPassword(userIDString, config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -125,7 +128,7 @@ func (app *App) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	// Delete verification data
 	verificationIDString := fmt.Sprint(verificationData.ID)
-	_, err = verification.DeleteVerification(verificationIDString, app.DB)
+	_, err = verification.DeleteVerification(verificationIDString, config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return

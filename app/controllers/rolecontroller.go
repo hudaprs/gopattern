@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"gopattern/config"
 	"io/ioutil"
 	"strconv"
 
@@ -13,11 +14,11 @@ import (
 )
 
 // GetAllRoles getting all users
-func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
+func GetAllRoles(w http.ResponseWriter, r *http.Request) {
 	role := &models.Role{}
 
 	// Count total of roles
-	total, err := role.CountRoles(app.DB)
+	total, err := role.CountRoles(config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -37,7 +38,7 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the paginate
-	roles, err := role.GetRoles(begin, limit, nameParam, app.DB)
+	roles, err := role.GetRoles(begin, limit, nameParam, config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -50,7 +51,7 @@ func (app *App) GetAllRoles(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateRole create a new role
-func (app *App) CreateRole(w http.ResponseWriter, r *http.Request) {
+func CreateRole(w http.ResponseWriter, r *http.Request) {
 	role := &models.Role{}
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -72,7 +73,7 @@ func (app *App) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newRole, err := role.Create(app.DB)
+	newRole, err := role.Create(config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -82,11 +83,11 @@ func (app *App) CreateRole(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetRole get role by ID
-func (app *App) GetRole(w http.ResponseWriter, r *http.Request) {
+func GetRole(w http.ResponseWriter, r *http.Request) {
 	role := &models.Role{}
 	id := mux.Vars(r)["id"]
 
-	roleData, _ := role.GetRoleByID(id, app.DB)
+	roleData, _ := role.GetRoleByID(id, config.DB)
 
 	if roleData == nil {
 		helpers.Error(w, http.StatusNotFound, "Role not found")
@@ -96,8 +97,8 @@ func (app *App) GetRole(w http.ResponseWriter, r *http.Request) {
 	helpers.Success(w, http.StatusOK, "Role Detail", roleData)
 }
 
-// Update Role
-func (app *App) UpdateRole(w http.ResponseWriter, r *http.Request) {
+// UpdateRole selected role
+func UpdateRole(w http.ResponseWriter, r *http.Request) {
 	role := &models.Role{}
 	id := mux.Vars(r)["id"]
 
@@ -121,13 +122,13 @@ func (app *App) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check role data and update the data
-	roleData, _ := role.GetRoleByID(id, app.DB)
+	roleData, _ := role.GetRoleByID(id, config.DB)
 	if roleData != nil {
-		if err := app.DB.Debug().Table("roles").First(&roleData).Update("name", role.Name).Error; err != nil {
+		if err := config.DB.Debug().Table("roles").First(&roleData).Update("name", role.Name).Error; err != nil {
 			helpers.Error(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		app.DB.Save(&roleData)
+		config.DB.Save(&roleData)
 
 		helpers.Success(w, http.StatusOK, "Role successfully updated", roleData)
 		return
@@ -138,13 +139,13 @@ func (app *App) UpdateRole(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteRole delete selected role
-func (app *App) DeleteRole(w http.ResponseWriter, r *http.Request) {
+func DeleteRole(w http.ResponseWriter, r *http.Request) {
 	role := &models.Role{}
 	id := mux.Vars(r)["id"]
 
-	roleData, _ := role.GetRoleByID(id, app.DB)
+	roleData, _ := role.GetRoleByID(id, config.DB)
 	if roleData != nil {
-		_, err := role.Delete(roleData.ID, app.DB)
+		_, err := role.Delete(roleData.ID, config.DB)
 		if err != nil {
 			helpers.Error(w, http.StatusBadRequest, err.Error())
 			return

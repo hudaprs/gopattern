@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/jinzhu/gorm"
 )
@@ -16,12 +15,11 @@ type Role struct {
 // GetRoles getting all roles
 func (role *Role) GetRoles(begin, limit int, name string, db *gorm.DB) (*[]Role, error) {
 	roles := []Role{}
-	if err := db.Debug().Table("roles").Offset(begin).Limit(limit).Where("name LIKE ?", "%" + name + "%").Find(&roles).Error; err != nil {
+	if err := db.Debug().Table("roles").Offset(begin).Limit(limit).Where("name LIKE ?", "%"+name+"%").Find(&roles).Error; err != nil {
 		return nil, err
 	}
 	return &roles, nil
 }
-
 
 // Validate a input user
 func (role Role) Validate() error {
@@ -45,7 +43,6 @@ func (role Role) GetRoleByID(id string, db *gorm.DB) (*Role, error) {
 	if err := db.Debug().Table("roles").Where("id = ?", id).First(&role).Error; err != nil {
 		return nil, err
 	}
-	fmt.Println(&role)
 	return &role, nil
 }
 
@@ -58,6 +55,7 @@ func (role *Role) Delete(id uint, db *gorm.DB) (*Role, error) {
 	return role, err
 }
 
+// CountRoles in database
 func (role *Role) CountRoles(db *gorm.DB) (int, error) {
 	var count int
 	if err := db.Debug().Table("roles").Count(&count).Error; err != nil {

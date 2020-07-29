@@ -15,6 +15,12 @@ Change *.env.example* to *.env*
 | DB_PASSWORD               | yourdbpassword
 | SECRET                    | secretJWT
 
+## List of users
+| Email                     | Password | Role           |
+| --------------------------| -------- | ---------------|
+| highadmin@gmail.com       | password | High Admin     |
+| normaladmin@gmail.com     | password | Normal Admin   |
+
 ## List of Endpoints
 List of endpoints for this starter
 

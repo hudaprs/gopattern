@@ -2,8 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/jinzhu/gorm"
 )
 
@@ -45,7 +43,6 @@ func (role Role) GetRoleByID(id string, db *gorm.DB) (*Role, error) {
 	if err := db.Debug().Table("roles").Where("id = ?", id).First(&role).Error; err != nil {
 		return nil, err
 	}
-	fmt.Println(&role)
 	return &role, nil
 }
 

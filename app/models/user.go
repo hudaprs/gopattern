@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -61,23 +62,35 @@ func (user *User) BeforeSave() error {
 	return nil
 }
 
+// ValidateRegister when user registering
+func (user User) ValidateRegister(db *gorm.DB) error {
+	role := &Role{}
+
+	if user.Name == "" {
+		return errors.New("Name is required")
+	}
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		return errors.New("Email is required and must be valid")
+	}
+	if user.Password == "" {
+		return errors.New("Password is required")
+	}
+	if user.RoleID == 0 {
+		return errors.New("Role ID is required")
+	}
+
+	// Get role data
+	roleIDToString := fmt.Sprint(user.RoleID)
+	roleData, _ := role.GetRoleByID(roleIDToString, db)
+	if roleData == nil {
+		return errors.New("Role data not found")
+	}
+	return nil
+}
+
 // Validate user
 func (user User) Validate(action string) error {
 	switch strings.ToLower(action) {
-	case "register":
-		if user.Name == "" {
-			return errors.New("Name is required")
-		}
-		if err := checkmail.ValidateFormat(user.Email); err != nil {
-			return errors.New("Email is required and must be valid")
-		}
-		if user.Password == "" {
-			return errors.New("Password is required")
-		}
-		if user.RoleID == 0 {
-			return errors.New("Role ID is required")
-		}
-		return nil
 	case "login":
 		if err := checkmail.ValidateFormat(user.Email); err != nil {
 			return errors.New("Email must be valid")
@@ -103,10 +116,11 @@ func (user User) Validate(action string) error {
 
 // GetUserByEmail for checking the existeence user
 func (user User) GetUserByEmail(db *gorm.DB) (*User, error) {
-	if err := db.Debug().Table("users").Preload("Role").Where("email = ?", user.Email).First(&user).Error; err != nil {
+	account := &User{}
+	if err := db.Debug().Table("users").Preload("Role").Where("email = ?", user.Email).First(account).Error; err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return account, nil
 }
 
 // Register a new user
@@ -121,7 +135,7 @@ func (user *User) Register(db *gorm.DB) (*User, error) {
 // GetUsers Get all users
 func (userJSON UserJSON) GetUsers(begin, limit int, name string, db *gorm.DB) (*[]UserJSON, error) {
 	users := []UserJSON{}
-	if err := db.Table("users").Preload("Role").Offset(begin).Limit(limit).Where("name LIKE ?", "%" + name + "%").Find(&users).Error; err != nil {
+	if err := db.Table("users").Preload("Role").Offset(begin).Limit(limit).Where("name LIKE ?", "%"+name+"%").Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return &users, nil

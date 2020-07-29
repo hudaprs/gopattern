@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopattern/app/helpers"
 	"gopattern/app/models"
+	"gopattern/config"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,9 +16,8 @@ import (
 )
 
 // Register a new user
-func (app *App) Register(w http.ResponseWriter, r *http.Request) {
+func Register(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
@@ -31,20 +31,20 @@ func (app *App) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate the user
-	err = user.Validate("register")
+	err = user.ValidateRegister(config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	// Check the user
-	checkUser, _ := user.GetUserByEmail(app.DB)
+	checkUser, _ := user.GetUserByEmail(config.DB)
 	if checkUser != nil {
 		helpers.Error(w, http.StatusUnauthorized, "Email already registered")
 		return
 	}
 
-	userData, err := user.Register(app.DB)
+	userData, err := user.Register(config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -64,7 +64,7 @@ func (app *App) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 // Login a user
-func (app *App) Login(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
 	role := &models.Role{}
 
@@ -88,7 +88,7 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check the user
-	userData, _ := user.GetUserByEmail(app.DB)
+	userData, _ := user.GetUserByEmail(config.DB)
 	if userData != nil {
 		// Check Password Hash
 		err = user.CheckHashedPassword(userData.Password, user.Password)
@@ -99,9 +99,9 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 
 		// Get Role for user
 		makeIDtoString := fmt.Sprint(userData.RoleID)
-		role, err := role.GetRoleByID(makeIDtoString, app.DB)
-		if err != nil {
-			helpers.Error(w, http.StatusBadRequest, err.Error())
+		role, _ := role.GetRoleByID(makeIDtoString, config.DB)
+		if role == nil {
+			helpers.Error(w, http.StatusBadRequest, "Role data not found")
 			return
 		}
 
@@ -132,11 +132,11 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAllUsers getting all users
-func (app *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	user := &models.UserJSON{}
 
 	// Get total of user data
-	total, err := user.CountUsers(app.DB)
+	total, err := user.CountUsers(config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -157,7 +157,7 @@ func (app *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// Get the pagination data
 	page, begin := helpers.Pagination(r, limitParam)
 
-	users, err := user.GetUsers(begin, page, nameParam, app.DB)
+	users, err := user.GetUsers(begin, page, nameParam, config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -170,11 +170,11 @@ func (app *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // UploadImage user
-func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
+func UploadUserImage(w http.ResponseWriter, r *http.Request) {
 	// Update the user
 	user := &models.UserJSON{}
 	userIDFromContext := fmt.Sprint(context.Get(r, "UserID"))
-	if err := app.DB.Debug().Table("users").Preload("Role").Where("id = ?", userIDFromContext).First(&user).Error; err != nil {
+	if err := config.DB.Debug().Table("users").Preload("Role").Where("id = ?", userIDFromContext).First(&user).Error; err != nil {
 		helpers.Error(w, http.StatusBadRequest, "User not found")
 		return
 	}
@@ -243,18 +243,18 @@ func (app *App) UploadUserImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save the user
-	app.DB.Save(&user)
+	config.DB.Save(&user)
 
 	helpers.Success(w, http.StatusOK, "Image uploaded", user)
 }
 
 // DeleteImage user
-func (app *App) DeleteImage(w http.ResponseWriter, r *http.Request) {
+func DeleteImage(w http.ResponseWriter, r *http.Request) {
 	user := &models.UserJSON{}
 	userIDFromContext := fmt.Sprint(context.Get(r, "UserID"))
 
 	// Get One User
-	userData, err := user.GetUser(userIDFromContext, app.DB)
+	userData, err := user.GetUser(userIDFromContext, config.DB)
 	if err != nil {
 		helpers.Error(w, http.StatusBadRequest, err.Error())
 		return
@@ -276,7 +276,7 @@ func (app *App) DeleteImage(w http.ResponseWriter, r *http.Request) {
 		}
 		// Set
 		userData.ImageURL = ""
-		app.DB.Save(&userData)
+		config.DB.Save(&userData)
 
 		helpers.Success(w, http.StatusOK, "Image deleted", userData)
 		return

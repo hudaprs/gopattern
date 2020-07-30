@@ -36,6 +36,58 @@ Change _.env.example_ to _.env_
 | highadmin@gmail.com   | password | High Admin   |
 | normaladmin@gmail.com | password | Normal Admin |
 
+## List of Endpoints
+
+List of endpoints for this starter
+
+### Public Routes
+
+| URL                          | Method | Description                  |
+| ---------------------------- | ------ | ---------------------------- |
+| /api/register                | POST   | Register a new user          |
+| /api/login                   | POST   | Logging a user               |
+| /api/forgot-password         | POST   | Forgot password user         |
+| /api/change-password/{token} | PATCH  | Change / Reset password user |
+
+### High Admin Routes
+
+Only High admin can access this & need token to access this
+
+| URL                | Method | Description         |
+| ------------------ | ------ | ------------------- |
+| /api/v1/roles      | GET    | Get all roles       |
+| /api/v1/roles      | POST   | Creating a new role |
+| /api/v1/roles/{id} | GET    | Get one role        |
+| /api/v1/roles/{id} | PATCH  | Update role         |
+| /api/v1/roles/{id} | DELETE | Delete role         |
+| /api/v1/users      | GET    | Get All Users       |
+
+### Protected Routes
+
+Protected routes & need token to access this
+
+| URL                           | Method | Description                          |
+| ----------------------------- | ------ | ------------------------------------ |
+| /api/v1/users/me              | GET    | Get profile / get authenticated user |
+| /api/v1/users/me/upload-image | POST   | Upload image of authenticated user   |
+| /api//users/me/delete-image   | GET    | Delete image of authenticated user   |
+
+## Controller
+I'm gonna recommend you,to make the controller inside *app/controllers*, it will make your controller more easy to import to use it in routing.
+
+## Model
+Everything that gonna interact with the database, you will place your model inside *app/models*.
+
+## Middlewares
+For the middleware, it's located in *app/middlewares*. 
+The default is contains for setting the type of response header and verifying the JWT.
+
+## Database
+You can configure your database setting in *config/database.go*.
+
+## Routing
+The routing's located in *routes* folder.
+
 ## Pagination
 
 All the core pagination functions located in _app/helpers/pagination.go_
@@ -218,41 +270,5 @@ func Test(w http.ResponseWriter, r *http.Request) {
     }
 }
 ```
-
-## List of Endpoints
-
-List of endpoints for this starter
-
-### Public Routes
-
-| URL                          | Method | Description                  |
-| ---------------------------- | ------ | ---------------------------- |
-| /api/register                | POST   | Register a new user          |
-| /api/login                   | POST   | Logging a user               |
-| /api/forgot-password         | POST   | Forgot password user         |
-| /api/change-password/{token} | PATCH  | Change / Reset password user |
-
-### High Admin Routes
-
-Only High admin can access this & need token to access this
-
-| URL                | Method | Description         |
-| ------------------ | ------ | ------------------- |
-| /api/v1/roles      | GET    | Get all roles       |
-| /api/v1/roles      | POST   | Creating a new role |
-| /api/v1/roles/{id} | GET    | Get one role        |
-| /api/v1/roles/{id} | PATCH  | Update role         |
-| /api/v1/roles/{id} | DELETE | Delete role         |
-| /api/v1/users      | GET    | Get All Users       |
-
-### Protected Routes
-
-Protected routes & need token to access this
-
-| URL                           | Method | Description                          |
-| ----------------------------- | ------ | ------------------------------------ |
-| /api/v1/users/me              | GET    | Get profile / get authenticated user |
-| /api/v1/users/me/upload-image | POST   | Upload image of authenticated user   |
-| /api//users/me/delete-image   | GET    | Delete image of authenticated user   |
 
 Author Huda Prasetyo 2020, All Right Reserved.

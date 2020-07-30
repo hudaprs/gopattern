@@ -161,7 +161,7 @@ The code is self-explanatory in there
 
 Here's the example for implementing pagination in the controller.
 You just insert the code down here.
-The URL only accept **_limit_** and **_name_** param
+The URL only accept **_limit_** and **_name_** query string
 
 ```go
 package controllers
@@ -267,6 +267,8 @@ func Test(w http.ResponseWriter, r *http.Request) {
     explicitError := true
     if explicitError == true {
         helpers.Error(w, http.StatusInternalServerError, "Something went wrong!")
+	// YOU MUST RETURN IT! Otherwise it's gonna be running to the next code / statement
+	return
     }
 }
 ```
